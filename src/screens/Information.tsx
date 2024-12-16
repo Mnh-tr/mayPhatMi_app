@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { StyleSheet, View, Image, Text } from "react-native";
+import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"; // Import LinearGradient
 import { fetchImages } from "../../slices/imageSlice";
 import { RootState, AppDispatch } from "../../store";
@@ -12,35 +12,66 @@ import { NavigationProps } from "../../types";
 const Information = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<NavigationProps>();
- // Hook để sử dụng navigation
-  const { images, loading, error } = useSelector(
-    (state: RootState) => state.images
-  );
+  const { images } = useSelector((state: RootState) => state.images);
 
-  // Lọc URL của các ảnh
   const bgImage = images.find((image) => image.name === "bg_icon.png")?.url;
   const profileImage = images.find((image) => image.name === "avatar.png")?.url;
   const imgDish1 = images.find((image) => image.name === "dish1.png")?.url;
   const imgDish2 = images.find((image) => image.name === "dish2.png")?.url;
   const imgDish3 = images.find((image) => image.name === "dish3.png")?.url;
   const bgImgBottom = images.find((image) => image.name === "bg.png")?.url;
+  const choseDish = images.find((image) => image.name === "choseDish.png")?.url;
+
+  const [selectedDishes, setSelectedDishes] = useState<boolean[]>([
+    false,
+    false,
+    false,
+  ]);
 
   useEffect(() => {
     dispatch(fetchImages("app_phatmi")); // Gọi Redux Thunk để tải ảnh
   }, [dispatch]);
 
+  const handleDishPress = (index: number) => {
+    setSelectedDishes((prevState) => {
+      const updatedState = [...prevState];
+  
+      // Ngăn không cho bỏ chọn dish 1 nếu dish 2 hoặc dish 3 đã được chọn
+      if (index === 0 && (updatedState[1] || updatedState[2])) {
+        return prevState;
+      }
+  
+      // Ngăn không cho bỏ chọn dish 2 nếu dish 3 đã được chọn
+      if (index === 1 && updatedState[2]) {
+        return prevState;
+      }
+  
+      // Logic để chọn món:
+      if (index === 0 || updatedState[index - 1]) {
+        // Nếu là dish 1 hoặc món trước đó đã được chọn
+        if (index === 2 && !updatedState[1]) {
+          // Nếu chọn dish 3 mà dish 2 chưa được chọn
+          return prevState; // Không thay đổi trạng thái
+        }
+        // Cho phép chọn hoặc bỏ chọn món nếu không vi phạm quy tắc
+        updatedState[index] = !updatedState[index];
+      }
+  
+      return updatedState;
+    });
+  };
+  
+
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["#F8A828", "#F8D838"]} // Màu gradient
+        colors={["#F8A828", "#F8D838"]}
         style={styles.gradientBackground}
       />
       <Image source={{ uri: bgImage }} style={styles.fullScreenImage} />
       <LogoImg welcomeText="Information" />
 
-      {/* Outer Border Layer */}
       <View style={styles.outerCard}>
-        {/* Inner Information Card */}
         <View style={styles.infoCard}>
           <View style={styles.imageWrapper}>
             <Image source={{ uri: profileImage }} style={styles.profileImage} />
@@ -66,11 +97,22 @@ const Information = () => {
         </View>
       </View>
 
-      {/* Dish Images */}
       <View style={styles.dishImagesContainer}>
-        <Image source={{ uri: imgDish1 }} style={styles.dishImage} />
-        <Image source={{ uri: imgDish2 }} style={styles.dishImage} />
-        <Image source={{ uri: imgDish3 }} style={styles.dishImage} />
+        {[imgDish1, imgDish2, imgDish3].map((img, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleDishPress(index)}
+            style={styles.dishWrapper}
+          >
+            <Image source={{ uri: img }} style={styles.dishImage} />
+            {selectedDishes[index] && (
+              <Image
+                source={{ uri: choseDish }}
+                style={styles.choseDishImage}
+              />
+            )}
+          </TouchableOpacity>
+        ))}
       </View>
 
       <View style={styles.bottomImageWrapper}>
@@ -89,7 +131,7 @@ const Information = () => {
       <View style={styles.btnCommit}>
         <GradientButton
           text="Get your noodles"
-          onPress={() => navigation.navigate("Done")} // Chuyển sang màn hình Done
+          onPress={() => navigation.navigate("Done")}
         />
       </View>
     </View>
@@ -97,7 +139,6 @@ const Information = () => {
 };
 
 export default Information;
-
 
 const styles = StyleSheet.create({
   container: {
@@ -196,6 +237,7 @@ const styles = StyleSheet.create({
     height: 150,
     resizeMode: "cover",
     borderRadius: 10,
+    zIndex: 2,
   },
 
   bottomImageWrapper: {
@@ -235,8 +277,22 @@ const styles = StyleSheet.create({
     fontWeight: "800", // Độ đậm nhẹ
     color: "#6F3D8A", // Màu tím nhẹ
   },
-  btnCommit:{
+  btnCommit: {
     marginTop: 60,
     zIndex: 3,
-  }
+  },
+
+  dishWrapper: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  choseDishImage: {
+    position: "absolute",
+    bottom: 15,
+    width: 120,
+    height: 120,
+    resizeMode: "contain",
+    zIndex: 1,
+  },
 });
