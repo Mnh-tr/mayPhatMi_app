@@ -24,8 +24,28 @@ const imageSlice = createSlice({
     images: [] as { name: string; url: string }[], // Mảng lưu danh sách ảnh
     loading: false,
     error: null as string | null,
+    noodleCount: 3, // Thêm biến noodleCount
   },
-  reducers: {},
+  reducers: {
+    // Reducer để tăng noodleCount
+    incrementNoodleCount: (state) => {
+      state.noodleCount += 1;
+    },
+    // Reducer để giảm noodleCount
+    decrementNoodleCount: (state) => {
+      state.noodleCount -= 1;
+    },
+    // Reducer để cập nhật noodleCount với giá trị cụ thể
+    setNoodleCount: (state, action) => {
+      state.noodleCount = action.payload;
+    },
+    // Reducer để giảm noodleCount mỗi khi chọn dish
+    reduceNoodleCount: (state) => {
+      if (state.noodleCount > 0) {
+        state.noodleCount -= 1;
+      }
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchImages.pending, (state) => {
@@ -41,5 +61,13 @@ const imageSlice = createSlice({
       });
   },
 });
+
+// Export reducers
+export const { 
+  incrementNoodleCount, 
+  decrementNoodleCount, 
+  setNoodleCount, 
+  reduceNoodleCount 
+} = imageSlice.actions;
 
 export default imageSlice.reducer;

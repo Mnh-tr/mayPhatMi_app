@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
-import { LinearGradient } from "expo-linear-gradient"; // Import LinearGradient
-import { fetchImages } from "../../slices/imageSlice";
+import { StyleSheet, View, Image, Text, TouchableOpacity, Alert } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { fetchImages, decrementNoodleCount } from "../../slices/imageSlice";
 import { RootState, AppDispatch } from "../../store";
-import { useNavigation } from "@react-navigation/native"; // Import useNavigation
+import { useNavigation } from "@react-navigation/native";
 import LogoImg from "../components/LogoImg";
 import GradientButton from "../components/GradientButton";
 import { NavigationProps } from "../../types";
@@ -12,7 +12,9 @@ import { NavigationProps } from "../../types";
 const Information = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<NavigationProps>();
-  const { images } = useSelector((state: RootState) => state.images);
+
+  // Lấy dữ liệu từ Redux store
+  const { images, noodleCount } = useSelector((state: RootState) => state.images);
 
   const bgImage = images.find((image) => image.name === "bg_icon.png")?.url;
   const profileImage = images.find((image) => image.name === "avatar.png")?.url;
@@ -21,12 +23,8 @@ const Information = () => {
   const imgDish3 = images.find((image) => image.name === "dish3.png")?.url;
   const bgImgBottom = images.find((image) => image.name === "bg.png")?.url;
   const choseDish = images.find((image) => image.name === "choseDish.png")?.url;
-
-  const [selectedDishes, setSelectedDishes] = useState<boolean[]>([
-    false,
-    false,
-    false,
-  ]);
+  const hetDish = images.find((image) => image.name === "hetDish.png")?.url;
+  const [selectedDishes, setSelectedDishes] = React.useState<boolean[]>([false, false, false]);
 
   useEffect(() => {
     dispatch(fetchImages("app_phatmi")); // Gọi Redux Thunk để tải ảnh
@@ -35,32 +33,29 @@ const Information = () => {
   const handleDishPress = (index: number) => {
     setSelectedDishes((prevState) => {
       const updatedState = [...prevState];
-  
-      // Ngăn không cho bỏ chọn dish 1 nếu dish 2 hoặc dish 3 đã được chọn
-      if (index === 0 && (updatedState[1] || updatedState[2])) {
-        return prevState;
-      }
-  
-      // Ngăn không cho bỏ chọn dish 2 nếu dish 3 đã được chọn
-      if (index === 1 && updatedState[2]) {
-        return prevState;
-      }
-  
-      // Logic để chọn món:
+
+      if (index === 0 && (updatedState[1] || updatedState[2])) return prevState;
+      if (index === 1 && updatedState[2]) return prevState;
+
       if (index === 0 || updatedState[index - 1]) {
-        // Nếu là dish 1 hoặc món trước đó đã được chọn
-        if (index === 2 && !updatedState[1]) {
-          // Nếu chọn dish 3 mà dish 2 chưa được chọn
-          return prevState; // Không thay đổi trạng thái
-        }
-        // Cho phép chọn hoặc bỏ chọn món nếu không vi phạm quy tắc
+        if (index === 2 && !updatedState[1]) return prevState;
         updatedState[index] = !updatedState[index];
       }
-  
+
       return updatedState;
     });
   };
-  
+
+  const handleGetYourNoodles = () => {
+    const isAnyDishSelected = selectedDishes.some((isSelected) => isSelected);
+
+    if (isAnyDishSelected) {
+      dispatch(decrementNoodleCount());
+      navigation.navigate("Done");
+    } else {
+      navigation.navigate("Done");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -103,9 +98,13 @@ const Information = () => {
             key={index}
             onPress={() => handleDishPress(index)}
             style={styles.dishWrapper}
+            disabled={noodleCount <= index}
           >
-            <Image source={{ uri: img }} style={styles.dishImage} />
-            {selectedDishes[index] && (
+            <Image
+              source={{ uri: noodleCount > index ? img : hetDish }}
+              style={styles.dishImage}
+            />
+            {selectedDishes[index] && noodleCount > index && (
               <Image
                 source={{ uri: choseDish }}
                 style={styles.choseDishImage}
@@ -120,7 +119,7 @@ const Information = () => {
       </View>
       <View style={styles.textChoseDish}>
         <Text>
-          <Text style={styles.textHighlight}>3</Text>
+          <Text style={styles.textHighlight}>{noodleCount}</Text>
           <Text style={styles.textNormal}>
             {" "}
             cups of noodles left this month
@@ -131,7 +130,7 @@ const Information = () => {
       <View style={styles.btnCommit}>
         <GradientButton
           text="Get your noodles"
-          onPress={() => navigation.navigate("Done")}
+          onPress={handleGetYourNoodles}
         />
       </View>
     </View>
@@ -139,6 +138,10 @@ const Information = () => {
 };
 
 export default Information;
+
+
+
+
 
 const styles = StyleSheet.create({
   container: {
