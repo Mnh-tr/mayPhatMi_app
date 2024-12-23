@@ -1,8 +1,9 @@
+// Information.js
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { StyleSheet, View, Image, Text, TouchableOpacity, Alert } from "react-native";
+import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { fetchImages, decrementNoodleCount } from "../../slices/imageSlice";
+import { fetchImages, decrementNoodleCountBy } from "../../slices/imageSlice";
 import { RootState, AppDispatch } from "../../store";
 import { useNavigation } from "@react-navigation/native";
 import LogoImg from "../components/LogoImg";
@@ -13,7 +14,6 @@ const Information = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<NavigationProps>();
 
-  // Lấy dữ liệu từ Redux store
   const { images, noodleCount } = useSelector((state: RootState) => state.images);
 
   const bgImage = images.find((image) => image.name === "bg_icon.png")?.url;
@@ -27,7 +27,7 @@ const Information = () => {
   const [selectedDishes, setSelectedDishes] = React.useState<boolean[]>([false, false, false]);
 
   useEffect(() => {
-    dispatch(fetchImages("app_phatmi")); // Gọi Redux Thunk để tải ảnh
+    dispatch(fetchImages("app_phatmi"));
   }, [dispatch]);
 
   const handleDishPress = (index: number) => {
@@ -47,10 +47,10 @@ const Information = () => {
   };
 
   const handleGetYourNoodles = () => {
-    const isAnyDishSelected = selectedDishes.some((isSelected) => isSelected);
+    const selectedCount = selectedDishes.filter((isSelected) => isSelected).length;
 
-    if (isAnyDishSelected) {
-      dispatch(decrementNoodleCount());
+    if (selectedCount > 0) {
+      dispatch(decrementNoodleCountBy(selectedCount));
       navigation.navigate("Done");
     } else {
       navigation.navigate("Done");
@@ -121,8 +121,7 @@ const Information = () => {
         <Text>
           <Text style={styles.textHighlight}>{noodleCount}</Text>
           <Text style={styles.textNormal}>
-            {" "}
-            cups of noodles left this month
+            {" "}cups of noodles left this month
           </Text>
         </Text>
       </View>
@@ -138,6 +137,7 @@ const Information = () => {
 };
 
 export default Information;
+
 
 
 

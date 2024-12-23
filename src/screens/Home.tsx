@@ -2,26 +2,18 @@ import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { StyleSheet, View, ActivityIndicator, Image, Text, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"; 
-import { fetchImages } from "../../slices/imageSlice";
 import { RootState, AppDispatch } from "../../store";
 import LogoImg from "../components/LogoImg";
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-
-// Định nghĩa RootStackParamList cho navigation
-type RootStackParamList = {
-  Home: undefined;
-  Information: undefined;
-};
-
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
+import { fetchImages } from "../../slices/imageSlice";
+import { NavigationProps } from "../../types";
 
 export default function Home() {
-  const navigation = useNavigation<HomeScreenNavigationProp>(); // Định nghĩa kiểu cho navigation
+  const navigation = useNavigation<NavigationProps>(); // Định nghĩa kiểu cho navigation
   const dispatch = useDispatch<AppDispatch>();
-  const { images, loading, error } = useSelector(
-    (state: RootState) => state.images
-  );
+    // Lấy dữ liệu từ Redux store
+    const { images, noodleCount } = useSelector((state: RootState) => state.images);
 
   // Lọc URL của ảnh có tên bg_icon.png, logo.jpg và img_video.jpg
   const bgImage = images.find((image) => image.name === "bg_icon.png")?.url;
@@ -37,9 +29,19 @@ export default function Home() {
 
   // Hàm xử lý nhấn vào frame16Img
   const handleFrame16Press = () => {
-    navigation.navigate("Information"); // Điều hướng tới màn hình Information
+    if (noodleCount === 0) {
+      navigation.navigate("OutOfNoodles"); // Điều hướng tới màn hình OutOfNoodles
+    } else {
+      navigation.navigate("Information"); // Điều hướng tới màn hình Information
+    }
+    
   };
-
+  const handleFramePress = () => {
+    
+      navigation.navigate("Error"); // Điều hướng tới màn hình OutOfNoodles
+    
+    
+  };
   return (
     <View style={styles.container}>
       {/* Gradient Background */}
@@ -72,11 +74,13 @@ export default function Home() {
         <TouchableOpacity onPress={handleFrame16Press}>
           <Image source={{ uri: frame16Img }} style={styles.frame16Img} resizeMode="contain" />
         </TouchableOpacity>
+        <TouchableOpacity onPress={handleFramePress}>
         <Image
           source={{ uri: frameImg }}
           style={styles.frameImg}
           resizeMode="contain"
         />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -156,7 +160,7 @@ const styles = StyleSheet.create({
   },
   bottomFrame: {
     position: "absolute",
-    bottom: 30,
+    bottom: 50,
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
@@ -173,6 +177,6 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     marginLeft: 10,
-    marginRight: "auto",
+    marginRight: 40,
   },
 });

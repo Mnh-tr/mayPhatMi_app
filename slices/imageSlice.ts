@@ -32,8 +32,11 @@ const imageSlice = createSlice({
       state.noodleCount += 1;
     },
     // Reducer để giảm noodleCount
-    decrementNoodleCount: (state) => {
-      state.noodleCount -= 1;
+    decrementNoodleCountBy: (state, action) => {
+      state.noodleCount -= action.payload;
+      if (state.noodleCount < 0) {
+        state.noodleCount = 0;
+      }
     },
     // Reducer để cập nhật noodleCount với giá trị cụ thể
     setNoodleCount: (state, action) => {
@@ -65,7 +68,7 @@ const imageSlice = createSlice({
 // Export reducers
 export const { 
   incrementNoodleCount, 
-  decrementNoodleCount, 
+  decrementNoodleCountBy, 
   setNoodleCount, 
   reduceNoodleCount 
 } = imageSlice.actions;

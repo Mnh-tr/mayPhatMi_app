@@ -1,13 +1,17 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { StyleSheet, View, Image, Text } from "react-native";
+import { StyleSheet, View, Image, Text,TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchImages } from "../../slices/imageSlice";
 import { RootState, AppDispatch } from "../../store";
 import LogoImg from "../components/LogoImg";
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { NavigationProps } from "../../types";
 import GradientButton from "../components/GradientButton";
 
 const Error = () => {
+  const navigation = useNavigation<NavigationProps>(); // Định nghĩa kiểu cho navigation
   const dispatch = useDispatch<AppDispatch>();
   const { images } = useSelector((state: RootState) => state.images);
 
@@ -21,7 +25,11 @@ const Error = () => {
   useEffect(() => {
     dispatch(fetchImages("app_phatmi"));
   }, [dispatch]);
-
+  const handleFrame16Press = () => {
+      navigation.navigate("Information"); // Điều hướng tới màn hình OutOfNoodles
+  
+    
+  };
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -53,11 +61,9 @@ const Error = () => {
         <Text style={styles.textScan}>Follow the arrow to scan card</Text>
       </View>
       <View style={styles.bottomFrame}>
-                <Image
-                  source={{ uri: frame16Img }}
-                  style={styles.frame16Img}
-                  resizeMode="contain" // Đảm bảo traller hiển thị đúng tỉ lệ
-                />
+                <TouchableOpacity onPress={handleFrame16Press}>
+                          <Image source={{ uri: frame16Img }} style={styles.frame16Img} resizeMode="contain" />
+                        </TouchableOpacity>
       
                 <Image
                   source={{ uri: frameImg }}
