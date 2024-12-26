@@ -45,17 +45,20 @@ const Information = () => {
       return updatedState;
     });
   };
+   
 
   const handleGetYourNoodles = () => {
     const selectedCount = selectedDishes.filter((isSelected) => isSelected).length;
-
+  
     if (selectedCount > 0) {
-      dispatch(decrementNoodleCountBy(selectedCount));
-      navigation.navigate("Done");
+      dispatch(decrementNoodleCountBy(selectedCount)).then(() => {
+        navigation.navigate("Done");
+      });
     } else {
       navigation.navigate("Done");
     }
   };
+  
 
   return (
     <View style={styles.container}>

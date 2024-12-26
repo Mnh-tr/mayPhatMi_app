@@ -1,19 +1,20 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { StyleSheet, View, ActivityIndicator, Image, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"; 
 import { RootState, AppDispatch } from "../../store";
 import LogoImg from "../components/LogoImg";
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { fetchImages } from "../../slices/imageSlice";
 import { NavigationProps } from "../../types";
+import { fetchImages, fetchNoodleCount } from "../../slices/imageSlice"; // Import fetchNoodleCount
+
 
 export default function Home() {
   const navigation = useNavigation<NavigationProps>(); // Định nghĩa kiểu cho navigation
   const dispatch = useDispatch<AppDispatch>();
-    // Lấy dữ liệu từ Redux store
-    const { images, noodleCount } = useSelector((state: RootState) => state.images);
+
+  // Lấy dữ liệu từ Redux store
+  const { images, noodleCount } = useSelector((state: RootState) => state.images);
 
   // Lọc URL của ảnh có tên bg_icon.png, logo.jpg và img_video.jpg
   const bgImage = images.find((image) => image.name === "bg_icon.png")?.url;
@@ -24,7 +25,9 @@ export default function Home() {
   const frame16Img = images.find((image) => image.name === "Frame16.png")?.url;
 
   useEffect(() => {
-    dispatch(fetchImages("app_phatmi")); // Gọi Redux Thunk để tải ảnh
+    // Gọi Redux Thunk để tải ảnh và noodleCount
+    dispatch(fetchImages("app_phatmi"));
+    dispatch(fetchNoodleCount());
   }, [dispatch]);
 
   // Hàm xử lý nhấn vào frame16Img
@@ -34,14 +37,13 @@ export default function Home() {
     } else {
       navigation.navigate("Information"); // Điều hướng tới màn hình Information
     }
-    
   };
+
+  // Hàm xử lý nhấn vào frameImg
   const handleFramePress = () => {
-    
-      navigation.navigate("Error"); // Điều hướng tới màn hình OutOfNoodles
-    
-    
+    navigation.navigate("Error"); // Điều hướng tới màn hình Error
   };
+
   return (
     <View style={styles.container}>
       {/* Gradient Background */}
@@ -75,11 +77,11 @@ export default function Home() {
           <Image source={{ uri: frame16Img }} style={styles.frame16Img} resizeMode="contain" />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleFramePress}>
-        <Image
-          source={{ uri: frameImg }}
-          style={styles.frameImg}
-          resizeMode="contain"
-        />
+          <Image
+            source={{ uri: frameImg }}
+            style={styles.frameImg}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       </View>
     </View>
