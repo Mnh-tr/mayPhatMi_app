@@ -8,7 +8,7 @@ import Done from './src/screens/Done';
 import Error from './src/screens/Error';
 import OutOfNoodles from './src/screens/OutOfNoodles';
 import store from './store'; // Redux store
-
+import CameraView from "./src/screens/CameraView";
 // Tạo Stack Navigator
 const Stack = createStackNavigator();
 
@@ -49,6 +49,7 @@ export default function App() {
           <Stack.Screen name="Done" component={Done} />
           <Stack.Screen name="Error" component={Error} />
           <Stack.Screen name="OutOfNoodles" component={OutOfNoodles} />
+          <Stack.Screen name="CameraView" component={CameraView} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>

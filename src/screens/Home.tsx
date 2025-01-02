@@ -33,9 +33,9 @@ export default function Home() {
   // Hàm xử lý nhấn vào frame16Img
   const handleFrame16Press = () => {
     if (noodleCount === 0) {
-      navigation.navigate("OutOfNoodles"); // Điều hướng tới màn hình OutOfNoodles
+      navigation.navigate("CameraView"); // Điều hướng tới màn hình OutOfNoodles
     } else {
-      navigation.navigate("Information"); // Điều hướng tới màn hình Information
+      navigation.navigate("CameraView"); // Điều hướng tới màn hình Information
     }
   };
 

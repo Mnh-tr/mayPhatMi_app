@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import imageReducer from './slices/imageSlice';
+import userReducer from './slices/userSlice'; // Import userSlice
 
 const store = configureStore({
   reducer: {
-    images: imageReducer,
+    images: imageReducer, // Reducer cho hình ảnh
+    user: userReducer,   // Reducer cho người dùng
   },
 });
 

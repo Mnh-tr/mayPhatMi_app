@@ -7,7 +7,10 @@ type RootStackParamList = {
   Done: undefined; // Không có tham số
   OutOfNoodles: undefined;
   Error: undefined;
+  CameraView: undefined;
 };
-
+export type RouteParams = {
+  userId: string; // Kiểu dữ liệu của userId, thay đổi nếu cần
+};
 // Định nghĩa kiểu navigation prop
 export type NavigationProps = StackNavigationProp<RootStackParamList>;

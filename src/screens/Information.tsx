@@ -1,20 +1,37 @@
-// Information.js
+// File: Information.tsx
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchImages, decrementNoodleCountBy } from "../../slices/imageSlice";
+import { fetchUser } from "../../slices/userSlice";
 import { RootState, AppDispatch } from "../../store";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import LogoImg from "../components/LogoImg";
 import GradientButton from "../components/GradientButton";
 import { NavigationProps } from "../../types";
+import { RouteParams } from "../../types";
 
 const Information = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<NavigationProps>();
+  const route = useRoute<RouteProp<{ params: RouteParams }, "params">>();
+
+  const { userId } = route.params || {}; // Lấy userId từ route.params
 
   const { images, noodleCount } = useSelector((state: RootState) => state.images);
+  const { user, status } = useSelector((state: RootState) => state.user); // Lấy thông tin user từ state.user
+
+  // Lấy dữ liệu user từ Firestore nếu có userId
+  useEffect(() => {
+    if (userId) {
+      dispatch(fetchUser(userId));
+    }
+  }, [dispatch, userId]);
+
+  useEffect(() => {
+    dispatch(fetchImages("app_phatmi"));
+  }, [dispatch]);
 
   const bgImage = images.find((image) => image.name === "bg_icon.png")?.url;
   const profileImage = images.find((image) => image.name === "avatar.png")?.url;
@@ -25,10 +42,6 @@ const Information = () => {
   const choseDish = images.find((image) => image.name === "choseDish.png")?.url;
   const hetDish = images.find((image) => image.name === "hetDish.png")?.url;
   const [selectedDishes, setSelectedDishes] = React.useState<boolean[]>([false, false, false]);
-
-  useEffect(() => {
-    dispatch(fetchImages("app_phatmi"));
-  }, [dispatch]);
 
   const handleDishPress = (index: number) => {
     setSelectedDishes((prevState) => {
@@ -45,11 +58,10 @@ const Information = () => {
       return updatedState;
     });
   };
-   
 
   const handleGetYourNoodles = () => {
     const selectedCount = selectedDishes.filter((isSelected) => isSelected).length;
-  
+
     if (selectedCount > 0) {
       dispatch(decrementNoodleCountBy(selectedCount)).then(() => {
         navigation.navigate("Done");
@@ -58,7 +70,6 @@ const Information = () => {
       navigation.navigate("Done");
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -72,24 +83,27 @@ const Information = () => {
       <View style={styles.outerCard}>
         <View style={styles.infoCard}>
           <View style={styles.imageWrapper}>
-            <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            <Image
+              source={{ uri: user?.avatar || profileImage }}
+              style={styles.profileImage}
+            />
           </View>
           <View style={styles.textContainer}>
             <View style={styles.infoTextRow}>
               <Text style={styles.label}>Full Name:</Text>
-              <Text style={styles.value}>Alice Mie</Text>
+              <Text style={styles.value}>{user?.name || "N/A"}</Text>
             </View>
             <View style={styles.infoTextRow}>
               <Text style={styles.label}>Birthday:</Text>
-              <Text style={styles.value}>12/10/1999</Text>
+              <Text style={styles.value}>{user?.birthday || "N/A"}</Text>
             </View>
             <View style={styles.infoTextRow}>
               <Text style={styles.label}>Gender:</Text>
-              <Text style={styles.value}>Female</Text>
+              <Text style={styles.value}>{user?.gender || "N/A"}</Text>
             </View>
             <View style={styles.infoTextRow}>
               <Text style={styles.label}>Department:</Text>
-              <Text style={styles.value}>Design</Text>
+              <Text style={styles.value}>{user?.department || "N/A"}</Text>
             </View>
           </View>
         </View>
@@ -138,8 +152,11 @@ const Information = () => {
     </View>
   );
 };
-
 export default Information;
+
+
+
+
 
 
 
@@ -301,4 +318,8 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     zIndex: 1,
   },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { fontSize: 16 },
+  errorContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  errorText: { fontSize: 16, color: "red" },
 });

@@ -26,7 +26,7 @@ const Error = () => {
     dispatch(fetchImages("app_phatmi"));
   }, [dispatch]);
   const handleFrame16Press = () => {
-      navigation.navigate("Information"); // Điều hướng tới màn hình OutOfNoodles
+      navigation.navigate("Home"); // Điều hướng tới màn hình OutOfNoodles
   
     
   };
