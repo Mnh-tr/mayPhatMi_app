@@ -8,6 +8,7 @@ interface User {
   department: string;
   gender: string;
   name: string;
+  noodleCount: number; // Bổ sung cột noodleCount
 }
 
 interface UserState {

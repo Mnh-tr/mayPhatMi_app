@@ -1,7 +1,7 @@
 // File: Information.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Image, Text, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { fetchImages, decrementNoodleCountBy } from "../../slices/imageSlice";
 import { fetchUser } from "../../slices/userSlice";
@@ -11,28 +11,37 @@ import LogoImg from "../components/LogoImg";
 import GradientButton from "../components/GradientButton";
 import { NavigationProps } from "../../types";
 import { RouteParams } from "../../types";
+import { getFirestore, doc, updateDoc } from "firebase/firestore";
 
 const Information = () => {
+  const route = useRoute<RouteProp<{ params: RouteParams }, "params">>();
+  const { userId } = route.params || {};
+  const { images } = useSelector((state: RootState) => state.images);
+  const { user } = useSelector((state: RootState) => state.user);
+
+  const noodleCount = user?.noodleCount ?? 0;
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<NavigationProps>();
-  const route = useRoute<RouteProp<{ params: RouteParams }, "params">>();
+ // Kiểm tra noodleCount và chuyển hướng nếu bằng 0
+useEffect(() => {
+  if (noodleCount === 0) {
+    navigation.navigate("OutOfNoodles");
+  }
+}, [noodleCount, navigation]);
 
-  const { userId } = route.params || {}; // Lấy userId từ route.params
-
-  const { images, noodleCount } = useSelector((state: RootState) => state.images);
-  const { user, status } = useSelector((state: RootState) => state.user); // Lấy thông tin user từ state.user
+  
+  // State để theo dõi trạng thái tải dữ liệu
+  const [isLoading, setIsLoading] = useState(true);
 
   // Lấy dữ liệu user từ Firestore nếu có userId
   useEffect(() => {
     if (userId) {
       dispatch(fetchUser(userId));
     }
+    dispatch(fetchImages("app_phatmi")).then(() => setIsLoading(false));
   }, [dispatch, userId]);
 
-  useEffect(() => {
-    dispatch(fetchImages("app_phatmi"));
-  }, [dispatch]);
-
+  
   const bgImage = images.find((image) => image.name === "bg_icon.png")?.url;
   const profileImage = images.find((image) => image.name === "avatar.png")?.url;
   const imgDish1 = images.find((image) => image.name === "dish1.png")?.url;
@@ -41,29 +50,41 @@ const Information = () => {
   const bgImgBottom = images.find((image) => image.name === "bg.png")?.url;
   const choseDish = images.find((image) => image.name === "choseDish.png")?.url;
   const hetDish = images.find((image) => image.name === "hetDish.png")?.url;
+
   const [selectedDishes, setSelectedDishes] = React.useState<boolean[]>([false, false, false]);
 
   const handleDishPress = (index: number) => {
     setSelectedDishes((prevState) => {
       const updatedState = [...prevState];
-
       if (index === 0 && (updatedState[1] || updatedState[2])) return prevState;
       if (index === 1 && updatedState[2]) return prevState;
-
       if (index === 0 || updatedState[index - 1]) {
         if (index === 2 && !updatedState[1]) return prevState;
         updatedState[index] = !updatedState[index];
       }
-
       return updatedState;
     });
   };
 
-  const handleGetYourNoodles = () => {
-    const selectedCount = selectedDishes.filter((isSelected) => isSelected).length;
+  const updateNoodleCount = async (newCount: number) => {
+    if (!userId) return;
+    try {
+      const db = getFirestore();
+      const userRef = doc(db, "User", userId);
+      await updateDoc(userRef, { noodleCount: newCount });
+    } catch (error) {
+      Alert.alert("Error", "Failed to update noodle count.");
+    }
+  };
 
-    if (selectedCount > 0) {
-      dispatch(decrementNoodleCountBy(selectedCount)).then(() => {
+  const handleGetYourNoodles = () => {
+    if (!user || user.noodleCount === undefined) {
+      return;
+    }
+    const selectedCount = selectedDishes.filter((isSelected) => isSelected).length;
+    if (selectedCount > 0 && user.noodleCount >= selectedCount) {
+      const newCount = user.noodleCount - selectedCount;
+      updateNoodleCount(newCount).then(() => {
         navigation.navigate("Done");
       });
     } else {
@@ -71,22 +92,27 @@ const Information = () => {
     }
   };
 
+  if (isLoading) {
+    // Hiển thị loading spinner nếu dữ liệu đang được tải
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#F8A828" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={["#F8A828", "#F8D838"]}
-        style={styles.gradientBackground}
-      />
+      <LinearGradient colors={["#F8A828", "#F8D838"]} style={styles.gradientBackground} />
       <Image source={{ uri: bgImage }} style={styles.fullScreenImage} />
       <LogoImg welcomeText="Information" />
 
+      {/* Nội dung chính */}
       <View style={styles.outerCard}>
         <View style={styles.infoCard}>
           <View style={styles.imageWrapper}>
-            <Image
-              source={{ uri: user?.avatar || profileImage }}
-              style={styles.profileImage}
-            />
+            <Image source={{ uri: user?.avatar || profileImage }} style={styles.profileImage} />
           </View>
           <View style={styles.textContainer}>
             <View style={styles.infoTextRow}>
@@ -111,22 +137,9 @@ const Information = () => {
 
       <View style={styles.dishImagesContainer}>
         {[imgDish1, imgDish2, imgDish3].map((img, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => handleDishPress(index)}
-            style={styles.dishWrapper}
-            disabled={noodleCount <= index}
-          >
-            <Image
-              source={{ uri: noodleCount > index ? img : hetDish }}
-              style={styles.dishImage}
-            />
-            {selectedDishes[index] && noodleCount > index && (
-              <Image
-                source={{ uri: choseDish }}
-                style={styles.choseDishImage}
-              />
-            )}
+          <TouchableOpacity key={index} onPress={() => handleDishPress(index)} style={styles.dishWrapper} disabled={noodleCount <= index}>
+            <Image source={{ uri: noodleCount > index ? img : hetDish }} style={styles.dishImage} />
+            {selectedDishes[index] && noodleCount > index && <Image source={{ uri: choseDish }} style={styles.choseDishImage} />}
           </TouchableOpacity>
         ))}
       </View>
@@ -137,31 +150,18 @@ const Information = () => {
       <View style={styles.textChoseDish}>
         <Text>
           <Text style={styles.textHighlight}>{noodleCount}</Text>
-          <Text style={styles.textNormal}>
-            {" "}cups of noodles left this month
-          </Text>
+          <Text style={styles.textNormal}> cups of noodles left this month</Text>
         </Text>
       </View>
 
       <View style={styles.btnCommit}>
-        <GradientButton
-          text="Get your noodles"
-          onPress={handleGetYourNoodles}
-        />
+        <GradientButton text="Get your noodles" onPress={handleGetYourNoodles} />
       </View>
     </View>
   );
 };
+
 export default Information;
-
-
-
-
-
-
-
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -170,6 +170,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     paddingTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 18,
+    color: "#F8A828",
   },
   gradientBackground: {
     position: "absolute",
@@ -239,7 +249,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     color: "#880B0B",
-    width: "40%",
+    width: "44%",
   },
   value: {
     fontSize: 14,
@@ -251,7 +261,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    marginTop: 30,
+    marginTop: 20,
     width: "100%",
     zIndex: 3,
   },
@@ -318,8 +328,6 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     zIndex: 1,
   },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { fontSize: 16 },
   errorContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: { fontSize: 16, color: "red" },
 });

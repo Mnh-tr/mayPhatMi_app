@@ -19,10 +19,7 @@ export default function CameraScreen({ navigation }: { navigation: any }) {
     setScanned(true);
 
     // Hiển thị đường dẫn qua Alert
-    Alert.alert("QR Code Scanned", `Data: ${data}`, [
-      {
-        text: "OK",
-        onPress: () => {
+   
           // Tách dữ liệu từ URL và chuyển sang màn hình Information
           const match = data.match(/https:\/\/qr\.me-qr\.com\/([a-zA-Z0-9]+)/);
           if (match && match[1]) {
@@ -33,9 +30,7 @@ export default function CameraScreen({ navigation }: { navigation: any }) {
             navigation.navigate("Error");
             setScanned(false);
           }
-        },
-      },
-    ]);
+       
   };
 
   if (hasPermission === null) {
